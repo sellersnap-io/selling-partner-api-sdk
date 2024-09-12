@@ -4,7 +4,8 @@
 package finances
 
 import (
-	"time"
+	"time",
+	"strings"
 )
 
 // AdjustmentEvent defines model for AdjustmentEvent.
@@ -242,7 +243,39 @@ type Currency struct {
 }
 
 // Date defines model for Date.
-type Date time.Time
+type Date struct {
+    time.Time
+}
+
+
+func (d *Date) UnmarshalJSON(data []byte) error {
+    // Remove quotes
+    s := strings.Trim(string(data), "\"")
+    
+    // Parse the time using the correct layout
+    t, err := time.Parse(time.RFC3339, s)
+    if err != nil {
+        layouts := []string{
+            "2006-01-02T15:04:05Z07:00",
+            "2006-01-02T15:04:05Z",
+            "2006-01-02T15:04:05",
+            "2006-01-02",
+        }
+
+        for _, layout := range layouts {
+            if t, err = time.Parse(layout, s); err == nil {
+                break
+            }
+        }
+
+        if err != nil {
+            return err
+        }
+    }
+    
+    d.Time = t
+    return nil
+}
 
 // DebtRecoveryEvent defines model for DebtRecoveryEvent.
 type DebtRecoveryEvent struct {
